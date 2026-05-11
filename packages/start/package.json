@@ -1,0 +1,80 @@
+{
+  "name": "@react-three/start",
+  "version": "0.0.1",
+  "description": "A tiny file-based start layer for React Three Fiber.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "bin": {
+    "start": "./dist/cli.js",
+    "react-three-start": "./dist/cli.js",
+    "r3s": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/runtime.d.ts",
+      "import": "./dist/runtime.js"
+    },
+    "./plugin": {
+      "types": "./dist/plugin.d.ts",
+      "import": "./dist/plugin.js"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE", "logo.png"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmndrs/react-three-start.git",
+    "directory": "packages/start"
+  },
+  "bugs": {
+    "url": "https://github.com/pmndrs/react-three-start/issues"
+  },
+  "homepage": "https://github.com/pmndrs/react-three-start#readme",
+  "keywords": [
+    "react",
+    "three",
+    "threejs",
+    "react-three-fiber",
+    "r3f",
+    "vite",
+    "webgl",
+    "webxr"
+  ],
+  "scripts": {
+    "build": "tsup src/runtime.tsx src/plugin.ts --format esm --dts --clean && tsup src/cli.ts --format esm --no-dts",
+    "prepack": "pnpm build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@react-three/fiber": ">=9",
+    "react": ">=19",
+    "react-dom": ">=19",
+    "three": ">=0.175.0"
+  },
+  "devDependencies": {
+    "@react-three/fiber": "^9.1.2",
+    "@types/fs-extra": "^11.0.4",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "three": "^0.176.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.2"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^4.7.0",
+    "cac": "^7.0.0",
+    "execa": "^9.6.1",
+    "fs-extra": "^11.3.5",
+    "open": "^11.0.0",
+    "package-manager-detector": "^1.6.0",
+    "picocolors": "^1.1.1",
+    "vite": "^6.3.4"
+  }
+}

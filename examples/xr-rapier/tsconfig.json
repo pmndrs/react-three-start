@@ -1,0 +1,7 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node", "@react-three/start"]
+  },
+  "include": ["src", "start.config.ts"]
+}
