@@ -131,6 +131,7 @@ function pipeAndOpen(child: ReturnType<typeof execaNode>) {
 }
 
 async function writeCliViteConfig(root: string): Promise<string> {
+  root = await fs.realpath(root)
   const cacheDir = path.join(root, 'node_modules', '.react-three-start')
   await fs.ensureDir(cacheDir)
 

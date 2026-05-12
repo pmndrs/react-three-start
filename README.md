@@ -5,7 +5,7 @@
 <h1 align="center">react-three-start</h1>
 
 <h3 align="center">
-  Boilerplate-free React Three Fiber apps using file-based scene composition.
+  A meta-framework for boilerplate-free React Three Fiber apps using file-based scene composition.
 </h3>
 
 <p align="center">
@@ -16,6 +16,16 @@
 ```bash
 npx @react-three/start create my-app
 ```
+
+## What is it?
+
+`react-three-start` is a meta-framework for [`@react-three/fiber`](https://github.com/pmndrs/react-three-fiber).
+
+In the same way [`SolidStart`](https://docs.solidjs.com/solid-start) adds application conventions around Solid, and [`TanStack Start`](https://tanstack.com/start/latest/docs) adds full-stack conventions around TanStack Router, `react-three-start` adds app-level conventions around R3F.
+
+It gives R3F projects a default shell, a file-based scene graph, DOM overlay composition, ordered wrapper composition, a CLI, and a Vite integration. You write the parts that make your app unique: meshes, lights, cameras, physics, XR providers, controls, UI, and editor panels.
+
+It is intentionally client-first. There is no routing system, server function layer, data loader, or deployment runtime. The framework boundary is the 3D app shell.
 
 ## Why
 
@@ -54,15 +64,17 @@ react-three-start dev
 
 No `vite.config.ts`, no `index.html`, no manual React entry, no scene registry.
 
-## Why not Vite or Next.js?
+## Where it fits
 
-| Use | Good for | Still missing |
+| Tool | Good for | Relationship to R3F |
 | --- | --- | --- |
-| Plain Vite | Fast React apps | R3F app structure, Canvas shell, file-based scene/DOM composition |
-| Next.js | Routed web apps | A simple client-first R3F mental model |
-| `react-three-start` | R3F apps | Only your actual scene and DOM files |
+| Plain Vite | Fast React apps | You still wire the HTML shell, React root, Canvas, and scene imports yourself |
+| Next.js | Routed React web apps | Great when the website is primary; heavier than needed for many client-first 3D apps |
+| [SolidStart](https://docs.solidjs.com/solid-start) | Full-stack Solid apps | A useful reference point for what a framework layer can provide around a UI runtime |
+| [TanStack Start](https://tanstack.com/start/latest/docs) | Full-stack React or Solid apps powered by TanStack Router | A useful reference point for file-based app conventions, routing, SSR, and server functions |
+| `react-three-start` | R3F apps, games, editors, configurators, XR experiments, and visual tools | The Canvas and scene are primary; the framework gives you R3F-specific structure instead of web-app routing |
 
-It is not a full web framework. It is a small start layer for R3F apps, games, editors, configurators, XR experiments, and visual tools.
+Think of it as "Start" for React Three Fiber: smaller and more focused than a full web framework, but more opinionated than a bare Vite app.
 
 ## Wrappers
 
@@ -130,13 +142,6 @@ Alias:
 ```bash
 r3s dev
 ```
-
-## Ecosystem
-
-- [`@react-three/fiber`](https://github.com/pmndrs/react-three-fiber)
-- [`@react-three/xr`](https://github.com/pmndrs/xr)
-- [`@react-three/rapier`](https://github.com/pmndrs/react-three-rapier)
-- [`@react-three/drei`](https://github.com/pmndrs/drei)
 
 ## License
 

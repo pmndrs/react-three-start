@@ -85,6 +85,9 @@ importers:
 
   packages/start:
     dependencies:
+      '@babel/parser':
+        specifier: ^7.29.3
+        version: 7.29.3
       '@vitejs/plugin-react':
         specifier: ^4.7.0
         version: 4.7.0(vite@6.4.2(@types/node@22.19.18))
@@ -97,6 +100,9 @@ importers:
       fs-extra:
         specifier: ^11.3.5
         version: 11.3.5
+      magic-string:
+        specifier: ^0.30.21
+        version: 0.30.21
       open:
         specifier: ^11.0.0
         version: 11.0.0

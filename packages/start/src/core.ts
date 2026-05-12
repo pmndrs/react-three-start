@@ -1,5 +1,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { parse } from '@babel/parser'
+import MagicString from 'magic-string'
+import { normalizePath } from 'vite'
 export type Layer = 'scene' | 'dom'
 
 export type StartOptions = {
@@ -9,11 +12,8 @@ export type StartOptions = {
 }
 
 export type Entry = {
-  id: string
   path: string
   layer: Layer
-  importsScene: boolean
-  importsDom: boolean
   isWrapper: boolean
 }
 
@@ -29,10 +29,6 @@ export const RESOLVED_PREFIX = `\0${VIRTUAL_PREFIX}`
 const sceneSuffix = '.scene.tsx'
 const domSuffix = '.dom.tsx'
 
-export function normalizePath(filePath: string): string {
-  return filePath.split(path.sep).join('/')
-}
-
 export function toRootImport(root: string, filePath: string): string {
   return `/${normalizePath(path.relative(root, filePath))}`
 }
@@ -45,17 +41,12 @@ export function getLayer(filePath: string): Layer | null {
 
 export function parseStartImports(source: string): { scene: boolean; dom: boolean } {
   const result = { scene: false, dom: false }
-  const importPattern =
-    /import\s*\{([^}]+)\}\s*from\s*['"]@react-three\/start['"]\s*;?/g
-  let match: RegExpExecArray | null
 
-  while ((match = importPattern.exec(source))) {
-    const names = match[1]
-      .split(',')
-      .map((part) => part.trim().split(/\s+as\s+/i)[0]?.trim())
+  for (const specifier of getStartImportSpecifiers(source)) {
+    if (specifier.kind === 'type') continue
 
-    result.scene ||= names.includes('Scene')
-    result.dom ||= names.includes('Dom')
+    result.scene ||= specifier.imported === 'Scene'
+    result.dom ||= specifier.imported === 'Dom'
   }
 
   return result
@@ -99,11 +90,8 @@ export function scanEntries(root: string): EntryGraph {
     const isWrapper = layer === 'scene' ? imports.scene : imports.dom
 
     return {
-      id: normalizePath(path.relative(root, filePath)),
       path: filePath,
       layer,
-      importsScene: imports.scene,
-      importsDom: imports.dom,
       isWrapper
     }
   })
@@ -122,47 +110,152 @@ export function splitEntries(entries: Entry[]): { wrappers: Entry[]; leaves: Ent
 }
 
 export function entryIndex(entries: Entry[], filePath: string): number {
-  const normalized = normalizePath(filePath)
-  return entries.findIndex((entry) => normalizePath(entry.path) === normalized)
-}
-
-export function isDiscoveredEntry(graph: EntryGraph, filePath: string): boolean {
-  return entryIndex([...graph.scene, ...graph.dom], filePath) !== -1
+  const normalized = normalizeComparablePath(filePath)
+  return entries.findIndex((entry) => normalizeComparablePath(entry.path) === normalized)
 }
 
 export function transformStartImports(
   source: string,
   options: {
     layer: Layer
-    isWrapper: boolean
     sceneTarget: string
     domTarget: string
   }
 ): string {
-  const importPattern =
-    /import\s*\{([^}]+)\}\s*from\s*['"]@react-three\/start['"]\s*;?/g
+  const ast = parseModule(source)
+  const code = new MagicString(source)
+  let changed = false
 
-  return source.replace(importPattern, (_full, specifiers: string) => {
-    const names = specifiers
-      .split(',')
-      .map((part: string) => part.trim().split(/\s+as\s+/i)[0]?.trim())
-      .filter(Boolean)
+  for (const node of ast.program.body) {
+    if (node.type !== 'ImportDeclaration') continue
+    if (node.source.value !== START_MODULE) continue
+    if (node.importKind === 'type') continue
 
+    let keptDefault: string | null = null
+    let keptNamespace: string | null = null
+    const keptNamed: string[] = []
     const replacements: string[] = []
 
-    if (names.includes('Scene')) {
-      replacements.push(`import Scene from ${JSON.stringify(options.sceneTarget)};`)
-    }
-
-    if (names.includes('Dom')) {
-      if (options.layer !== 'dom') {
-        throw new Error('Dom can only be imported from discovered *.dom.tsx entry files.')
+    for (const specifier of node.specifiers) {
+      if (specifier.type === 'ImportDefaultSpecifier') {
+        keptDefault = specifier.local.name
+        continue
       }
-      replacements.push(`import Dom from ${JSON.stringify(options.domTarget)};`)
+
+      if (specifier.type === 'ImportNamespaceSpecifier') {
+        keptNamespace = specifier.local.name
+        continue
+      }
+
+      if (specifier.type !== 'ImportSpecifier') {
+        continue
+      }
+
+      const imported = getImportedName(specifier.imported)
+      const local = specifier.local.name
+
+      if (specifier.importKind === 'type') {
+        keptNamed.push(printImportSpecifier(specifier))
+      } else if (imported === 'Scene') {
+        replacements.push(`import ${local} from ${JSON.stringify(options.sceneTarget)};`)
+      } else if (imported === 'Dom') {
+        if (options.layer !== 'dom') {
+          throw new Error('Dom can only be imported from discovered *.dom.tsx entry files.')
+        }
+        replacements.push(`import ${local} from ${JSON.stringify(options.domTarget)};`)
+      } else {
+        keptNamed.push(printImportSpecifier(specifier))
+      }
     }
 
-    return replacements.join('\n')
+    if (replacements.length === 0) continue
+
+    const keptImport = printKeptImport(keptDefault, keptNamespace, keptNamed)
+    if (keptImport) replacements.push(keptImport)
+
+    code.overwrite(node.start ?? 0, node.end ?? 0, replacements.join('\n'))
+    changed = true
+  }
+
+  return changed ? code.toString() : source
+}
+
+function getStartImportSpecifiers(source: string): Array<{
+  imported: string
+  kind: 'type' | 'value'
+}> {
+  const ast = parseModule(source)
+  const specifiers: Array<{ imported: string; kind: 'type' | 'value' }> = []
+
+  for (const node of ast.program.body) {
+    if (node.type !== 'ImportDeclaration') continue
+    if (node.source.value !== START_MODULE) continue
+    if (node.importKind === 'type') continue
+
+    for (const specifier of node.specifiers) {
+      if (specifier.type !== 'ImportSpecifier') continue
+      specifiers.push({
+        imported: getImportedName(specifier.imported),
+        kind: specifier.importKind === 'type' ? 'type' : 'value'
+      })
+    }
+  }
+
+  return specifiers
+}
+
+function parseModule(source: string) {
+  return parse(source, {
+    sourceType: 'module',
+    plugins: ['jsx', 'typescript']
   })
+}
+
+function normalizeComparablePath(filePath: string): string {
+  try {
+    return normalizePath(fs.realpathSync.native(filePath))
+  } catch {
+    return normalizePath(path.resolve(filePath))
+  }
+}
+
+function getImportedName(node: { type: string; name?: string; value?: string }): string {
+  return node.type === 'Identifier' ? node.name ?? '' : node.value ?? ''
+}
+
+function printKeptImport(
+  defaultSpecifier: string | null,
+  namespaceSpecifier: string | null,
+  namedSpecifiers: string[]
+): string | null {
+  const source = JSON.stringify(START_MODULE)
+
+  if (namespaceSpecifier) {
+    const head = defaultSpecifier ? `${defaultSpecifier}, ` : ''
+    return `import ${head}* as ${namespaceSpecifier} from ${source};`
+  }
+
+  if (namedSpecifiers.length > 0) {
+    const head = defaultSpecifier ? `${defaultSpecifier}, ` : ''
+    return `import ${head}{ ${namedSpecifiers.join(', ')} } from ${source};`
+  }
+
+  if (defaultSpecifier) {
+    return `import ${defaultSpecifier} from ${source};`
+  }
+
+  return null
+}
+
+function printImportSpecifier(specifier: {
+  local?: { name: string }
+  imported?: { type: string; name?: string; value?: string }
+  importKind?: 'type' | 'typeof' | 'value' | null
+}): string {
+  const imported = specifier.imported ? getImportedName(specifier.imported) : ''
+  const local = specifier.local?.name ?? imported
+  const kind = specifier.importKind === 'type' ? 'type ' : ''
+  return imported === local ? `${kind}${imported}` : `${kind}${imported} as ${local}`
 }
 
 export function createEntriesModuleCode(root: string, entries: Entry[]): string {
@@ -184,7 +277,6 @@ export function createWrapperContinuationCode(
   root: string,
   wrappers: Entry[],
   leavesId: string,
-  continuationPrefix: string,
   index: number
 ): string {
   if (index >= wrappers.length) {
@@ -275,22 +367,6 @@ export function escapeHtml(value: string): string {
 
 export function hasIndexHtml(root: string): boolean {
   return fs.existsSync(path.join(root, 'index.html'))
-}
-
-export function writeGeneratedHtml(root: string, title?: string): string {
-  const dir = path.join(root, 'node_modules', '.react-three-start')
-  const filePath = path.join(dir, 'index.html')
-  fs.mkdirSync(dir, { recursive: true })
-  fs.writeFileSync(filePath, createHtmlDocument(title), 'utf8')
-  return filePath
-}
-
-export function virtualId(id: string): string {
-  return `${VIRTUAL_PREFIX}/${id}`
-}
-
-export function resolvedVirtualId(id: string): string {
-  return `${RESOLVED_PREFIX}/${id}`
 }
 
 export function stripResolvedVirtualId(id: string): string | null {

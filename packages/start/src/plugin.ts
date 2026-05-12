@@ -9,9 +9,9 @@ import {
   createHtmlDocument,
   createHtmlInjectionTag,
   createWrapperContinuationCode,
+  entryIndex,
   hasIndexHtml,
   hasStartSlotImport,
-  isDiscoveredEntry,
   scanEntries,
   splitEntries,
   stripResolvedVirtualId,
@@ -108,7 +108,6 @@ export function reactThreeStart(options: StartOptions = {}): Plugin {
           config.root,
           scene.wrappers,
           `${VIRTUAL_PREFIX}/scene/leaves`,
-          `${VIRTUAL_PREFIX}/scene`,
           Number(sceneContinuation[1])
         )
       }
@@ -119,7 +118,6 @@ export function reactThreeStart(options: StartOptions = {}): Plugin {
           config.root,
           dom.wrappers,
           `${VIRTUAL_PREFIX}/dom/leaves`,
-          `${VIRTUAL_PREFIX}/dom`,
           Number(domContinuation[1])
         )
       }
@@ -136,21 +134,19 @@ export function reactThreeStart(options: StartOptions = {}): Plugin {
       if (!hasStartSlotImport(source)) return null
 
       const graph = getGraph()
-      if (!isDiscoveredEntry(graph, filePath)) {
+      const allEntries = [...graph.scene, ...graph.dom]
+      const entry = allEntries[entryIndex(allEntries, filePath)]
+      if (!entry) {
         this.error(
           `Scene and Dom imports from ${START_MODULE} are only valid in discovered ` +
             `src/**/*.scene.tsx and src/**/*.dom.tsx entry files: ${path.relative(config.root, filePath)}`
         )
       }
 
-      const allEntries = [...graph.scene, ...graph.dom]
-      const entry = allEntries.find((candidate) => candidate.path === filePath)
-      if (!entry) return null
-
       const sceneWrappers = splitEntries(graph.scene).wrappers
       const domWrappers = splitEntries(graph.dom).wrappers
-      const sceneWrapperIndex = sceneWrappers.findIndex((candidate) => candidate.path === filePath)
-      const domWrapperIndex = domWrappers.findIndex((candidate) => candidate.path === filePath)
+      const sceneWrapperIndex = entryIndex(sceneWrappers, filePath)
+      const domWrapperIndex = entryIndex(domWrappers, filePath)
 
       const sceneTarget =
         entry.layer === 'scene' && sceneWrapperIndex !== -1
@@ -165,7 +161,6 @@ export function reactThreeStart(options: StartOptions = {}): Plugin {
       return {
         code: transformStartImports(source, {
           layer: entry.layer,
-          isWrapper: entry.isWrapper,
           sceneTarget,
           domTarget
         }),
