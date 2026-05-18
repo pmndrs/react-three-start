@@ -5,12 +5,13 @@
   "packageManager": "pnpm@10.18.0",
   "scripts": {
     "build": "pnpm --filter @react-three/start build && pnpm build:examples",
-    "build:examples": "node packages/start/dist/cli.js build examples/minimal && node packages/start/dist/cli.js build examples/xr-rapier",
+    "build:examples": "node packages/start/dist/cli.js build examples/minimal && node packages/start/dist/cli.js build examples/xr-rapier && node packages/start/dist/cli.js build examples/immersive-web-editor",
     "test": "pnpm -r test",
     "typecheck": "pnpm --filter @react-three/start typecheck",
     "release:dry": "rm -rf .release && mkdir -p .release && pnpm --filter @react-three/start pack --pack-destination .release",
     "dev:minimal": "pnpm --filter react-three-start-minimal dev",
-    "dev:xr-rapier": "pnpm --filter react-three-start-xr-rapier dev"
+    "dev:xr-rapier": "pnpm --filter react-three-start-xr-rapier dev",
+    "dev:immersive-web-editor": "pnpm --filter react-three-start-immersive-web-editor dev"
   },
   "devDependencies": {
     "@types/node": "^22.15.3",

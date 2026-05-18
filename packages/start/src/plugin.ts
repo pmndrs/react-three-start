@@ -6,6 +6,7 @@ import {
   VIRTUAL_PREFIX,
   createClientModuleCode,
   createEntriesModuleCode,
+  createSceneEntriesModuleCode,
   createHtmlDocument,
   createHtmlInjectionTag,
   createWrapperContinuationCode,
@@ -95,7 +96,7 @@ export function reactThreeStart(options: StartOptions = {}): Plugin {
       }
 
       if (virtual === 'scene/leaves') {
-        return createEntriesModuleCode(config.root, scene.leaves)
+        return createSceneEntriesModuleCode(config.root, scene.leaves)
       }
 
       if (virtual === 'dom/leaves') {

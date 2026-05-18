@@ -1,0 +1,25 @@
+{
+  "name": "react-three-start-immersive-web-editor",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "react-three-start dev",
+    "build": "react-three-start build",
+    "preview": "react-three-start preview"
+  },
+  "dependencies": {
+    "@react-three/fiber": "^9.1.2",
+    "@react-three/start": "workspace:*",
+    "immersive-web-editor": "^0.0.22",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "three": "^0.176.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@types/three": "^0.176.0",
+    "typescript": "^5.8.3",
+    "vite": "^7.2.4"
+  }
+}

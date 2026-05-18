@@ -258,19 +258,38 @@ function printImportSpecifier(specifier: {
   return imported === local ? `${kind}${imported}` : `${kind}${imported} as ${local}`
 }
 
-export function createEntriesModuleCode(root: string, entries: Entry[]): string {
-  const imports = entries
+function createEntryImports(root: string, entries: Entry[]): string {
+  return entries
     .map((entry, index) => `import Entry${index} from ${JSON.stringify(toRootImport(root, entry.path))};`)
     .join('\n')
-  const children = entries.map((_entry, index) => `jsx(Entry${index}, {})`).join(', ')
+}
+
+function createEntryChildren(entries: Entry[]): string[] {
+  return entries.map((_entry, index) => `jsx(Entry${index}, {})`)
+}
+
+function createEntriesModule(imports: string, children: string[]): string {
+  const renderedChildren = children.join(', ')
 
   return `${imports}
 import { Fragment, jsx, jsxs } from 'react/jsx-runtime';
 
 export default function Entries() {
-  return jsxs(Fragment, { children: [${children}] });
+  return jsxs(Fragment, { children: [${renderedChildren}] });
 }
 `
+}
+
+export function createEntriesModuleCode(root: string, entries: Entry[]): string {
+  return createEntriesModule(createEntryImports(root, entries), createEntryChildren(entries))
+}
+
+export function createSceneEntriesModuleCode(root: string, entries: Entry[]): string {
+  return createEntriesModule(
+    `${createEntryImports(root, entries)}
+import { EditorCamera } from '@react-three/start';`,
+    ['jsx(EditorCamera, {})', ...createEntryChildren(entries)]
+  )
 }
 
 export function createWrapperContinuationCode(
@@ -297,7 +316,6 @@ export function createClientModuleCode(options: Required<StartOptions>): string 
   return `import { createElement, Fragment } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Canvas } from '@react-three/fiber';
-import { EditorCamera } from '@react-three/start';
 import Scene from '${VIRTUAL_PREFIX}/scene/0';
 import Dom from '${VIRTUAL_PREFIX}/dom/0';
 
@@ -321,7 +339,7 @@ function StartApp() {
         ? `createElement(
       'div',
       { style: { position: 'fixed', inset: 0 } },
-      createElement(Canvas, null, createElement(EditorCamera), createElement(Scene))
+      createElement(Canvas, null, createElement(Scene))
     )`
         : 'null'
     },
