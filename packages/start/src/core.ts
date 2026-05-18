@@ -297,6 +297,7 @@ export function createClientModuleCode(options: Required<StartOptions>): string 
   return `import { createElement, Fragment } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Canvas } from '@react-three/fiber';
+import { EditorCamera } from '@react-three/start';
 import Scene from '${VIRTUAL_PREFIX}/scene/0';
 import Dom from '${VIRTUAL_PREFIX}/dom/0';
 
@@ -320,7 +321,7 @@ function StartApp() {
         ? `createElement(
       'div',
       { style: { position: 'fixed', inset: 0 } },
-      createElement(Canvas, null, createElement(Scene))
+      createElement(Canvas, null, createElement(EditorCamera), createElement(Scene))
     )`
         : 'null'
     },

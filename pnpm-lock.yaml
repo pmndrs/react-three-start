@@ -88,6 +88,9 @@ importers:
       '@babel/parser':
         specifier: ^7.29.3
         version: 7.29.3
+      '@immersive-web-editor/adapter':
+        specifier: file:../../../drawcall.ai/editor/editor/packages/adapter
+        version: file:../drawcall.ai/editor/editor/packages/adapter
       '@vitejs/plugin-react':
         specifier: ^4.7.0
         version: 4.7.0(vite@6.4.2(@types/node@22.19.18))
@@ -128,6 +131,9 @@ importers:
       '@types/react-dom':
         specifier: ^19.1.2
         version: 19.2.3(@types/react@19.2.14)
+      '@types/three':
+        specifier: ^0.176.0
+        version: 0.176.0
       react:
         specifier: ^19.1.0
         version: 19.2.6
@@ -580,6 +586,9 @@ packages:
     peerDependencies:
       '@fortawesome/fontawesome-svg-core': ~1 || ~6
       react: '>=16.3'
+
+  '@immersive-web-editor/adapter@file:../drawcall.ai/editor/editor/packages/adapter':
+    resolution: {directory: ../drawcall.ai/editor/editor/packages/adapter, type: directory}
 
   '@iwer/devui@1.1.2':
     resolution: {integrity: sha512-ggF1lXSX14BTYP0QzB4xaurySr2PC+3+rtK/dpCR++giWquzFv2mBw3LW/PaCtdl5mqkZMrQ2GSwfUNg9ZoO+w==}
@@ -1949,6 +1958,8 @@ snapshots:
       '@fortawesome/fontawesome-svg-core': 6.6.0
       prop-types: 15.8.1
       react: 19.2.6
+
+  '@immersive-web-editor/adapter@file:../drawcall.ai/editor/editor/packages/adapter': {}
 
   '@iwer/devui@1.1.2(@types/react@19.2.14)(iwer@2.2.1)':
     dependencies:

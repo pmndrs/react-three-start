@@ -53,6 +53,7 @@
     "@types/fs-extra": "^11.0.4",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
+    "@types/three": "^0.176.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "three": "^0.176.0",
@@ -62,6 +63,7 @@
   },
   "dependencies": {
     "@babel/parser": "^7.29.3",
+    "@immersive-web-editor/adapter": "file:../../../drawcall.ai/editor/editor/packages/adapter",
     "@vitejs/plugin-react": "^4.7.0",
     "cac": "^7.0.0",
     "execa": "^9.6.1",
