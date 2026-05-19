@@ -1,7 +1,7 @@
-import { publishEditorCamera, type CameraMatrix } from '@immersive-web-editor/adapter'
+import { publishEditorCamera, publishPreviewViewport, type EditorCamera as EditorCameraState } from '@immersive-web-editor/adapter'
 import { useFrame, useThree, type ThreeElements } from '@react-three/fiber'
 import { useEffect, useRef, useState, type ComponentType } from 'react'
-import { Matrix4, PerspectiveCamera, type Camera } from 'three'
+import { Matrix4, PerspectiveCamera } from 'three'
 
 export type StartSlot = ComponentType
 export type StartThreeElements = ThreeElements
@@ -19,72 +19,57 @@ export const Scene = createUntransformedSlot('Scene')
 export const Dom = createUntransformedSlot('Dom')
 
 export function EditorCamera() {
-  const editorCameraMatrix = useRef<CameraMatrix | null>(null)
+  const editorCameraState = useRef<EditorCameraState | null>(null)
   const [hasEditorCamera, setHasEditorCamera] = useState(false)
+  const gl = useThree((state) => state.gl)
   const invalidate = useThree((state) => state.invalidate)
 
   useEffect(() => {
-    return publishEditorCamera((matrix) => {
-      editorCameraMatrix.current = matrix
+    const disposeEditorCamera = publishEditorCamera((camera) => {
+      editorCameraState.current = camera
       setHasEditorCamera(true)
       invalidate()
     })
-  }, [invalidate])
+    const viewport = publishPreviewViewport(gl.domElement)
+    return () => {
+      disposeEditorCamera()
+      viewport.dispose()
+    }
+  }, [gl, invalidate])
 
-  return hasEditorCamera ? <EditorCameraRenderer matrix={editorCameraMatrix} /> : null
+  return hasEditorCamera ? <EditorCameraRenderer cameraState={editorCameraState} /> : null
 }
 
 function EditorCameraRenderer({
-  matrix
+  cameraState
 }: {
-  matrix: { current: CameraMatrix | null }
+  cameraState: { current: EditorCameraState | null }
 }) {
   const editorCamera = useRef(new PerspectiveCamera(45))
   const editorCameraMatrix = useRef(new Matrix4())
-  const camera = useThree((state) => state.camera)
-  const size = useThree((state) => state.size)
 
-  useEffect(() => {
-    syncEditorCameraProjection(editorCamera.current, camera, size.width / size.height)
-  }, [camera, size.height, size.width])
-
-  useFrame(({ camera, gl, scene, size }) => {
-    if (matrix.current) {
-      applyEditorCameraMatrix(editorCamera.current, editorCameraMatrix.current, matrix.current)
+  useFrame(({ gl, scene }) => {
+    if (cameraState.current) {
+      applyEditorCamera(editorCamera.current, editorCameraMatrix.current, cameraState.current)
     }
 
-    syncEditorCameraProjection(editorCamera.current, camera, size.width / size.height)
     gl.render(scene, editorCamera.current)
   }, 1)
 
   return null
 }
 
-function applyEditorCameraMatrix(
+function applyEditorCamera(
   camera: PerspectiveCamera,
   scratchMatrix: Matrix4,
-  matrix: CameraMatrix
+  state: EditorCameraState
 ) {
-  scratchMatrix.fromArray(matrix)
+  scratchMatrix.fromArray(state.matrixWorld)
   camera.matrixAutoUpdate = false
   camera.matrix.copy(scratchMatrix)
   camera.matrixWorld.copy(scratchMatrix)
   camera.matrix.decompose(camera.position, camera.quaternion, camera.scale)
   camera.matrixWorldInverse.copy(camera.matrixWorld).invert()
-}
-
-function syncEditorCameraProjection(
-  editorCamera: PerspectiveCamera,
-  renderCamera: Camera,
-  aspect: number
-) {
-  if (renderCamera instanceof PerspectiveCamera) {
-    editorCamera.fov = renderCamera.fov
-    editorCamera.near = renderCamera.near
-    editorCamera.far = renderCamera.far
-    editorCamera.zoom = renderCamera.zoom
-  }
-
-  editorCamera.aspect = aspect
-  editorCamera.updateProjectionMatrix()
+  camera.projectionMatrix.fromArray(state.projectionMatrix)
+  camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert()
 }
