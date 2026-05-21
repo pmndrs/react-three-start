@@ -17,6 +17,9 @@ importers:
 
   examples/immersive-web-editor:
     dependencies:
+      '@immersive-web-editor/adapter':
+        specifier: ^0.0.24
+        version: 0.0.24
       '@react-three/fiber':
         specifier: ^9.1.2
         version: 9.6.1(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(three@0.176.0)
@@ -35,6 +38,9 @@ importers:
       three:
         specifier: ^0.176.0
         version: 0.176.0
+      use-sync-external-store:
+        specifier: ^1.6.0
+        version: 1.6.0(react@19.2.6)
     devDependencies:
       '@types/react':
         specifier: ^19.1.2
@@ -126,8 +132,8 @@ importers:
         specifier: ^7.29.3
         version: 7.29.3
       '@immersive-web-editor/adapter':
-        specifier: ^0.0.23
-        version: 0.0.23
+        specifier: ^0.0.24
+        version: 0.0.24
       '@vitejs/plugin-react':
         specifier: ^4.7.0
         version: 4.7.0(vite@6.4.2(@types/node@22.19.18))
@@ -668,6 +674,9 @@ packages:
 
   '@immersive-web-editor/adapter@0.0.23':
     resolution: {integrity: sha512-FWEOVytXiYFeYLGaTGyhZBGCjJRSLSJrstnhyyzKk6FOgd0QDiuhPxpK8HKupXNkoralN2pAHh7OPGb7p7E5BQ==}
+
+  '@immersive-web-editor/adapter@0.0.24':
+    resolution: {integrity: sha512-R1lUTjZ1aMJU3O89mshfEK5bRhFnSc5JXdhD5zDkwvGrk9uIIfTcI7KVUl6Le3DJo+1IkChEBm8NHbINVxCmpQ==}
 
   '@immersive-web-editor/ui@0.0.23':
     resolution: {integrity: sha512-AgOr+BbbjEJP+Q93nM8k3xUGlWiFwQPLAMrI5JjzefwJeSPlDiOXt3ySadhWTrdlLNv2V2wk9Ms0QzE+RSrzlw==}
@@ -2708,6 +2717,8 @@ snapshots:
       react: 19.2.6
 
   '@immersive-web-editor/adapter@0.0.23': {}
+
+  '@immersive-web-editor/adapter@0.0.24': {}
 
   '@immersive-web-editor/ui@0.0.23(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:

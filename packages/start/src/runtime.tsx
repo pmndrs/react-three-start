@@ -1,7 +1,7 @@
 import { publishEditorCamera, publishPreviewViewport, type EditorCamera as EditorCameraState } from '@immersive-web-editor/adapter'
 import { useFrame, useThree, type ThreeElements } from '@react-three/fiber'
-import { useEffect, useRef, useState, type ComponentType } from 'react'
-import { Matrix4, PerspectiveCamera } from 'three'
+import { useEffect, useRef, type ComponentType } from 'react'
+import { Camera, Matrix4 } from 'three'
 
 export type StartSlot = ComponentType
 export type StartThreeElements = ThreeElements
@@ -20,14 +20,15 @@ export const Dom = createUntransformedSlot('Dom')
 
 export function EditorCamera() {
   const editorCameraState = useRef<EditorCameraState | null>(null)
-  const [hasEditorCamera, setHasEditorCamera] = useState(false)
+  const editorCameraMatrix = useRef(new Matrix4())
+  const camera = useThree((state) => state.camera)
   const gl = useThree((state) => state.gl)
   const invalidate = useThree((state) => state.invalidate)
 
   useEffect(() => {
-    const disposeEditorCamera = publishEditorCamera((camera) => {
-      editorCameraState.current = camera
-      setHasEditorCamera(true)
+    const disposeEditorCamera = publishEditorCamera((nextCamera) => {
+      editorCameraState.current = nextCamera
+      applyEditorCamera(camera, editorCameraMatrix.current, nextCamera)
       invalidate()
     })
     const viewport = publishPreviewViewport(gl.domElement)
@@ -35,32 +36,19 @@ export function EditorCamera() {
       disposeEditorCamera()
       viewport.dispose()
     }
-  }, [gl, invalidate])
+  }, [camera, gl, invalidate])
 
-  return hasEditorCamera ? <EditorCameraRenderer cameraState={editorCameraState} /> : null
-}
-
-function EditorCameraRenderer({
-  cameraState
-}: {
-  cameraState: { current: EditorCameraState | null }
-}) {
-  const editorCamera = useRef(new PerspectiveCamera(45))
-  const editorCameraMatrix = useRef(new Matrix4())
-
-  useFrame(({ gl, scene }) => {
-    if (cameraState.current) {
-      applyEditorCamera(editorCamera.current, editorCameraMatrix.current, cameraState.current)
+  useFrame(() => {
+    if (editorCameraState.current) {
+      applyEditorCamera(camera, editorCameraMatrix.current, editorCameraState.current)
     }
-
-    gl.render(scene, editorCamera.current)
-  }, 1)
+  })
 
   return null
 }
 
 function applyEditorCamera(
-  camera: PerspectiveCamera,
+  camera: Camera,
   scratchMatrix: Matrix4,
   state: EditorCameraState
 ) {

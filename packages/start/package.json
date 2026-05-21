@@ -63,7 +63,7 @@
   },
   "dependencies": {
     "@babel/parser": "^7.29.3",
-    "@immersive-web-editor/adapter": "^0.0.23",
+    "@immersive-web-editor/adapter": "^0.0.24",
     "@vitejs/plugin-react": "^4.7.0",
     "cac": "^7.0.0",
     "execa": "^9.6.1",
